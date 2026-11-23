@@ -61,7 +61,7 @@ class Scene:
 
         if self.texture_data.shape[2] != texture_data.shape[2] or self.texture_data.shape[1] != texture_data.shape[1] or self.texture_data.shape[0] < texture_data.shape[0]:
             print("Warning: reallocating texture_data field to match loaded textures")
-            self.texture_data = ti.Vector.field(3, dtype=ti.f32, shape=(texture_data.shape[0], texture_data.shape[1]))
+            self.texture_data = ti.Vector.field(3, dtype=ti.f32, shape=(texture_data.shape[0], texture_data.shape[1], texture_data.shape[2]))
         print("Texture data shape:", texture_data.shape, "field shape:", self.texture_data.shape)
         self.texture_data.from_numpy(texture_data)
 
