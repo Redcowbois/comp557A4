@@ -16,10 +16,19 @@ def getRayPoint(ray: Ray, t: float) -> tm.vec3:
 
 @ti.func
 def changeRayFrame(ray: Ray, M: tm.mat4) -> Ray:
-    # TODO: Objective 4: Ray and Geometry Transformations
+    # Objective 4: Ray and Geometry Transformations
+    orig_h = tm.vec4(ray.origin.x, ray.origin.y, ray.origin.z, 1.0)
+    dir_h = tm.vec4(ray.direction.x, ray.direction.y, ray.direction.z, 0.0)
 
+    new_orig = M @ orig_h
+    new_dir = M @ dir_h
 
-    return ray # change this placeholder to return a transformed ray
+    new_orig_3 = tm.vec3(new_orig.x, new_orig.y, new_orig.z)
+    if new_orig.w != 1.0 and new_orig.w != 0.0:
+        new_orig_3 /= new_orig.w
+    new_dir_3 = tm.vec3(new_dir.x, new_dir.y, new_dir.z)
+
+    return Ray(new_orig_3, new_dir_3)
 
 
 @ti.dataclass
@@ -47,8 +56,17 @@ class Intersection: # All fields will be set to zero on creation, otherwise spec
 
 @ti.func
 def changeIntersectFrame(intersect: Intersection, M: tm.mat4, M_inv: tm.mat4) -> Intersection:
+    # Objective 4: Ray and Geometry Transformations
+    pos_h = tm.vec4(intersect.position.x, intersect.position.y, intersect.position.z, 1.0)
+    new_pos = M @ pos_h
 
-    # TODO: Objective 4: Ray and Geometry Transformations
+    norm_h = tm.vec4(intersect.normal.x, intersect.normal.y, intersect.normal.z, 0.0)
+    new_norm = M_inv.transpose() @ norm_h
 
+    out = intersect
+    out.position = tm.vec3(new_pos.x, new_pos.y, new_pos.z)
+    if new_pos.w != 1.0 and new_pos.w != 0.0:
+        out.position /= new_pos.w
+    out.normal = tm.normalize(tm.vec3(new_norm.x, new_norm.y, new_norm.z))
 
-    return intersect # change this placeholder to return a transformed intersection
+    return out
