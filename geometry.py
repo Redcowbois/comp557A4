@@ -104,8 +104,21 @@ def intersectPlane(plane: Plane, ray: Ray, t_min: float, t_max: float) -> Inters
 
     hit = Intersection() # default is no intersection (is_hit = False)
 
-    # TODO: Objective 5: Implement ray-plane intersection
+    # Objective 5: Implement ray-plane intersection
+    local_ray = changeRayFrame(ray, plane.M_inv)
 
+    denom = tm.dot(local_ray.direction, plane.normal)
+    if ti.abs(denom) > 1e-6:
+        t = -tm.dot(local_ray.origin, plane.normal) / denom
+        if t >= t_min and t <= t_max:
+            local_pos = getRayPoint(local_ray, t)
+            hit.is_hit = True
+            hit.t = t
+            hit.position = local_pos
+            hit.normal = plane.normal
+            hit.mat = plane.material_id
+            hit.texture_coords = tm.vec3(local_pos.x, local_pos.z, 0.0)
+            hit = changeIntersectFrame(hit, plane.M, plane.M_inv)
 
     return hit
 
