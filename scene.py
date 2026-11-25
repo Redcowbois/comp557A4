@@ -186,14 +186,36 @@ class Scene:
 
         intersect.normal = tm.normalize(intersect.normal)
 
+        v = -tm.normalize(ray.direction)
+
         ti.loop_config(serialize=True) 
         for l in range(self.nb_lights[None]):
-            
-            # TODO: Objective 3: Implement diffuse and specular shading
-            
-            # TODO: Objective 6: Implement shadow rays
+            light = self.lights[l]
+            l_dir = light.vector
+            attenuation = 1.0
 
-            continue
+            if light.ltype == 1: # point light
+                to_light = light.vector - intersect.position
+                dist = tm.length(to_light)
+                if dist > 0.0:
+                    l_dir = to_light / dist
+                # Attenuation coefficients: [quadratic, linear, constant]
+                denom = light.attenuation[2] + light.attenuation[1] * dist + light.attenuation[0] * dist * dist
+                if denom > 0.0:
+                    attenuation = 1.0 / denom
+
+            n_dot_l = tm.dot(intersect.normal, l_dir)
+            if n_dot_l > 0.0:
+                # Diffuse shading (Lambertian)
+                diffuse_term = kd * light.colour * n_dot_l * attenuation
+                sample_colour += diffuse_term
+
+                # Specular shading (Blinn-Phong)
+                h = tm.normalize(v + l_dir)
+                n_dot_h = tm.dot(intersect.normal, h)
+                if n_dot_h > 0.0 and material.shininess > 0.0:
+                    specular_term = material.specular * light.colour * tm.pow(n_dot_h, material.shininess) * attenuation
+                    sample_colour += specular_term
 
         return sample_colour
     
