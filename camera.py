@@ -30,18 +30,26 @@ class Camera:
 		self.jitter = jitter
 		self.samples = samples
 
-		# TODO: Objective 1: Compute camera frame basis vectors, and top bottom left right for ray generation
-		# NOTE: glm vectors are passed in to permit the work to be done here in python, but stored vectors must be tm.vec3
+		# Objective 1: Compute camera frame basis vectors, and top bottom left right for ray generation
+		# w points opposite to the gaze direction (away from scene)
+		w_glm = glm.normalize(eye_position - lookat)
+		# u is the right vector (up x w)
+		u_glm = glm.normalize(glm.cross(up, w_glm))
+		# v is the true orthogonal up vector (w x u)
+		v_glm = glm.cross(w_glm, u_glm)
 
+		# Compute view plane boundaries at distance_to_plane
+		fovy_rad = glm.radians(fovy)
+		self.top = self.distance_to_plane * glm.tan(fovy_rad / 2.0)
+		self.bottom = -self.top
+		aspect_ratio = float(width) / float(height)
+		self.right = self.top * aspect_ratio
+		self.left = -self.right
 
-		# Compute proper values below!
-		self.top = 1
-		self.bottom = -1
-		self.left = -1
-		self.right = 1
-		self.u = tm.vec3(1,0,0)
-		self.v = tm.vec3(0,0,0)
-		self.w = tm.vec3(0,0,1)
+		# Store basis vectors as Taichi tm.vec3 types
+		self.u = tm.vec3(u_glm.x, u_glm.y, u_glm.z)
+		self.v = tm.vec3(v_glm.x, v_glm.y, v_glm.z)
+		self.w = tm.vec3(w_glm.x, w_glm.y, w_glm.z)
 		self.eye_position = tm.vec3(eye_position.x, eye_position.y, eye_position.z)
 
 
@@ -60,7 +68,17 @@ class Camera:
 		'''
 
 		
-		# TODO: Objective 1: Generate ray from camera through pixel (col, row) with jittering
+		# Objective 1: Generate ray from camera through pixel (x, y) with optional jittering
+		offset_x = 0.5
+		offset_y = 0.5
+		if ti.static(self.jitter):
+			offset_x = ti.random()
+			offset_y = ti.random()
 
+		u_val = self.left + (self.right - self.left) * (x + offset_x) / self.width
+		v_val = self.bottom + (self.top - self.bottom) * (y + offset_y) / self.height
 
-		return Ray( self.eye_position, tm.vec3(0,0,-1) )  # temporary ray
+		# Direction vector: s - e = u * u_basis + v * v_basis - d * w_basis
+		direction = tm.normalize(u_val * self.u + v_val * self.v - self.distance_to_plane * self.w)
+
+		return Ray(self.eye_position, direction)
