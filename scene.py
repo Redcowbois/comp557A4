@@ -114,14 +114,11 @@ class Scene:
 
         print("done with lights")
 
-        # TODO: should check that the fields are actually big enough!
-        if (self.meshes_verts.shape[0] < meshes_verts.shape[0]):
-            print("Warning: reallocating meshes_verts field to larger size")
-            self.meshes_verts = ti.Vector.field(3, shape=(meshes_verts.shape[0]), dtype=float)
-        if (self.meshes_faces.shape[0] < meshes_faces.shape[0]):
-            print("Warning: reallocating meshes_faces field to larger size")
-            self.meshes_faces = ti.Vector.field(3, shape=(meshes_faces.shape[0]), dtype=int)
         if meshes_verts.shape[0] > 0: # only copy if there actually are meshes!
+            if (self.meshes_verts.shape[0] != meshes_verts.shape[0]):
+                self.meshes_verts = ti.Vector.field(3, shape=(meshes_verts.shape[0]), dtype=float)
+            if (self.meshes_faces.shape[0] != meshes_faces.shape[0]):
+                self.meshes_faces = ti.Vector.field(3, shape=(meshes_faces.shape[0]), dtype=int)
             self.meshes_verts.from_numpy(meshes_verts)
             self.meshes_faces.from_numpy(meshes_faces)
 

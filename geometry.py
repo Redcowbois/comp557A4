@@ -211,7 +211,53 @@ def intersectMesh(mesh: Mesh,                  # data for this mesh (start face 
     
     out_intersect = Intersection() # default is no intersection (is_hit = False)
 
-    # TODO: Objective 8: Implement ray-mesh intersection
+    # Objective 8: Implement ray-mesh intersection
+    local_ray = changeRayFrame(ray, mesh.M_inv)
+    p = local_ray.origin
+    d = local_ray.direction
 
+    closest_t = t_max
+    hit_pos = tm.vec3(0.0)
+    hit_normal = tm.vec3(0.0)
+    is_hit = False
+
+    ti.loop_config(serialize=True)
+    for i in range(mesh.faces_ids_start, mesh.faces_ids_start + mesh.faces_ids_count):
+        face = meshes_faces[i]
+        a = meshes_verts[face[0]]
+        b = meshes_verts[face[1]]
+        c = meshes_verts[face[2]]
+
+        # Triangle edges and normal
+        ab = b - a
+        ac = c - a
+        n = tm.cross(ab, ac)
+
+        denom = tm.dot(d, n)
+        # Ray-plane intersection
+        if ti.abs(denom) > 1e-6:
+            t = tm.dot(a - p, n) / denom
+
+            if t >= t_min and t < closest_t:
+                x = p + t * d
+
+                # 3 half-spaces / CCW edge tests using cross product
+                c1 = tm.cross(b - a, x - a)
+                c2 = tm.cross(c - b, x - b)
+                c3 = tm.cross(a - c, x - c)
+
+                if tm.dot(c1, n) >= 0.0 and tm.dot(c2, n) >= 0.0 and tm.dot(c3, n) >= 0.0:
+                    is_hit = True
+                    closest_t = t
+                    hit_pos = x
+                    hit_normal = n
+
+    if is_hit:
+        out_intersect.is_hit = True
+        out_intersect.t = closest_t
+        out_intersect.position = hit_pos
+        out_intersect.normal = tm.normalize(hit_normal)
+        out_intersect.mat = mesh.material_id
+        out_intersect = changeIntersectFrame(out_intersect, mesh.M, mesh.M_inv)
 
     return out_intersect

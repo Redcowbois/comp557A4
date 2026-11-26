@@ -10,7 +10,7 @@ Did you discuss the assignment with other students, the TAs, or the prof?  If ye
 
 If you used any LLM tools, give a short description of how you used them.  If you did not use any LLM tools, leave as "No LLM tools used".
 
-- I used LLM tools to understand the course content and to help me debug some issues. Mostly as a pair programmer to help me vocalize my thoughts.
+- I used LLM tools to understand the course content and to help me debug some issues. Mostly as a pair programmer to help me vocalize my thoughts. I also used LLM to help me understand the repository.
 
 Explain decisions you made in writing the code.
 
