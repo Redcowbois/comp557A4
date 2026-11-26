@@ -135,8 +135,59 @@ class AABox:
 def intersectAABox(aabox: AABox, ray: Ray, t_min: float, t_max: float) -> Intersection:
     hit = Intersection() # default is no intersection (is_hit = False)
 
-    # TODO: Objective 7: Implement ray-box intersection
+    # Objective 7: Ray-AABox intersection using the slab method
+    local_ray = changeRayFrame(ray, aabox.M_inv)
+    p = local_ray.origin
+    d = local_ray.direction
 
+    # Compute t intervals for x slab
+    tx_min = (aabox.minpos.x - p.x) / d.x
+    tx_max = (aabox.maxpos.x - p.x) / d.x
+    tx_entry = ti.min(tx_min, tx_max)
+    tx_exit = ti.max(tx_min, tx_max)
+
+    # Compute t intervals for y slab
+    ty_min = (aabox.minpos.y - p.y) / d.y
+    ty_max = (aabox.maxpos.y - p.y) / d.y
+    ty_entry = ti.min(ty_min, ty_max)
+    ty_exit = ti.max(ty_min, ty_max)
+
+    # Compute t intervals for z slab
+    tz_min = (aabox.minpos.z - p.z) / d.z
+    tz_max = (aabox.maxpos.z - p.z) / d.z
+    tz_entry = ti.min(tz_min, tz_max)
+    tz_exit = ti.max(tz_min, tz_max)
+
+    t_entry = ti.max(ti.max(tx_entry, ty_entry), tz_entry)
+    t_exit = ti.min(ti.min(tx_exit, ty_exit), tz_exit)
+
+    if t_exit >= t_entry:
+        t_hit = -1.0
+        hit_normal = tm.vec3(0.0)
+        if t_entry >= t_min and t_entry <= t_max:
+            t_hit = t_entry
+            if t_entry == tx_entry:
+                hit_normal = tm.vec3(-1.0 if tx_entry == tx_min else 1.0, 0.0, 0.0)
+            elif t_entry == ty_entry:
+                hit_normal = tm.vec3(0.0, -1.0 if ty_entry == ty_min else 1.0, 0.0)
+            else:
+                hit_normal = tm.vec3(0.0, 0.0, -1.0 if tz_entry == tz_min else 1.0)
+        elif t_exit >= t_min and t_exit <= t_max:
+            t_hit = t_exit
+            if t_exit == tx_exit:
+                hit_normal = tm.vec3(1.0 if tx_exit == tx_max else -1.0, 0.0, 0.0)
+            elif t_exit == ty_exit:
+                hit_normal = tm.vec3(0.0, 1.0 if ty_exit == ty_max else -1.0, 0.0)
+            else:
+                hit_normal = tm.vec3(0.0, 0.0, 1.0 if tz_exit == tz_max else -1.0)
+
+        if t_hit >= 0.0:
+            hit.is_hit = True
+            hit.t = t_hit
+            hit.position = getRayPoint(local_ray, t_hit)
+            hit.normal = hit_normal
+            hit.mat = aabox.material_id
+            hit = changeIntersectFrame(hit, aabox.M, aabox.M_inv)
 
     return hit
 
